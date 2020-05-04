@@ -1,0 +1,165 @@
+#!/bin/bash
+
+readonly TESTEE='flk_test'
+
+# 全てのテストに対する共通の環境を準備する
+function oneTimeSetUp() {
+
+    cat <<__EOC__
+--------------------------------------------------------------------------------
+shUnit2 開始  バージョン：  ${SHUNIT_VERSION}   一時領域：   ${SHUNIT_TMPDIR}
+テスト対象：  ${TESTEE}
+--------------------------------------------------------------------------------
+__EOC__
+
+    . ./src/flk_test.func
+}
+
+# 全てのテストが完了した後、環境をきれいにする
+function oneTimeTearDown() {
+    cat <<__EOC__
+--------------------------------------------------------------------------------
+shUnit2 終了
+--------------------------------------------------------------------------------
+__EOC__
+
+}
+
+
+# 各テストの前に環境を再設定する
+function setUp() {
+    :
+}
+
+# 各テストの後に環境をきれいにする
+function tearDown() {
+    :
+}
+
+function suite() {
+    suite_addTest 引き算が成功すること
+    suite_addTest 引き算が失敗した時NULLとなること
+    suite_addTest 割り算が成功すること
+    suite_addTest 割り算が失敗した時NULLとなること
+    suite_addTest 引き算が成功した時のメッセージが出力されること
+    suite_addTest 割り算が成功した時のメッセージが出力されること
+    suite_addTest 引き算が失敗した時のメッセージが出力されること
+    suite_addTest 割り算が失敗した時のメッセージが出力されること
+    suite_addTest ローダシェルから呼び出せること
+
+}
+
+
+# テスト関数
+
+function testFunc() {
+    assertTrue "0"
+}
+
+function 引き算が成功すること() {
+    local val_1="1"
+    local val_2="3"
+    local expected="-2"
+
+    local result=$(flk_test_minus ${val_1} ${val_2})
+
+    assertEquals "計算値誤り" "${expected}" "${result}"
+}
+
+function 引き算が失敗した時NULLとなること() {
+    # 数値でなく文字が渡されるパターン
+    local val_1="あ"
+    local val_2="3"
+    local result=0
+
+    result=$(flk_test_minus ${val_1} ${val_2})
+    assertNull "Nullでない" "${result}"
+
+    result=$(flk_test_minus ${val_2} ${val_1})
+    assertNull "Nullでない" "${result}"
+}
+
+function 割り算が成功すること() {
+    local val_1="4"
+    local val_2="2"
+    local expected="2"
+
+    local result=$(flk_test_divide ${val_1} ${val_2})
+
+    assertEquals "計算値誤り" "${expected}" "${result}"
+}
+
+function 割り算が失敗した時NULLとなること() {
+    # 数値でなく文字が渡されるパターン
+    local val_1="あ"
+    local val_2="3"
+    local result=0
+
+    result=$(flk_test_divide ${val_1} ${val_2})
+    assertNull "【文字が引数】Nullでない" "${result}"
+
+    result=$(flk_test_divide ${val_2} ${val_1})
+    assertNull "【文字が引数】Nullでない" "${result}"
+
+    # 0割
+    val_1="3"
+    val_2="0"
+    result=$(flk_test_divide ${val_1} ${val_2})
+    assertNull "【0割】Nullでない" "${result}"
+}
+
+function 引き算が成功した時のメッセージが出力されること() {
+    local expected="引き算の結果は0です"
+    local unexpected="引き算の結果は不正です"
+
+    local result=$(flk_test_main 1 1)
+
+    assertEquals "メッセージが出ていない" "1" "$(echo ${result} | grep ${expected} | wc -l)"
+    assertEquals "メッセージが出てる" "0" "$(echo ${result} | grep ${unexpected} | wc -l)"
+}
+
+function 割り算が成功した時のメッセージが出力されること() {
+    local expected="割り算の結果は1です"
+    local unexpected="割り算の結果は不正です"
+
+    local result=$(flk_test_main 1 1)
+
+    assertEquals "メッセージが出ていない" "1" "$(echo ${result} | grep ${expected} | wc -l)"
+    assertEquals "メッセージが出てる" "0" "$(echo ${result} | grep ${unexpected} | wc -l)"
+}
+
+function 引き算が失敗した時のメッセージが出力されること() {
+    local expected="引き算の結果は不正です"
+    local unexpected="引き算の結果は[.+-][0-9]+です"
+
+    local result=$(flk_test_main あ 1)
+
+    assertEquals "メッセージが出ていない" "1" "$(echo ${result} | grep ${expected} | wc -l)"
+    assertEquals "メッセージが出てる" "0" "$(echo ${result} | grep -E ${unexpected} | wc -l)"
+}
+
+function 割り算が失敗した時のメッセージが出力されること() {
+    local expected="割り算の結果は不正です"
+    local unexpected="割り算の結果は[.+-][0-9]+です"
+
+    local result=$(flk_test_main あ 1)
+
+    assertEquals "メッセージが出ていない" "1" "$(echo ${result} | grep ${expected} | wc -l)"
+    assertEquals "メッセージが出てる" "0" "$(echo ${result} | grep -E ${unexpected} | wc -l)"
+
+}
+
+function ローダシェルから呼び出せること() {
+    local expected_1="引き算の結果は0です"
+    local expected_2="割り算の結果は1です"
+
+    local result=$(./src/flk_test.sh 1 1)
+
+    assertEquals "メッセージが出ていない" "1" "$(echo ${result} | grep ${expected_1} | wc -l)"
+    assertEquals "メッセージが出ていない" "1" "$(echo ${result} | grep ${expected_2} | wc -l)"
+}
+
+
+
+# shUnit2のロード
+. shunit2

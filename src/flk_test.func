@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#
+# flk_testのエントリポイント
+#
+function flk_test_main() {
+    local valA=$1
+    local valB=$2
+
+    local minusResult=$(flk_test_minus "${valA}" "${valB}")
+    local divideResult=$(flk_test_divide "${valA}" "${valB}")
+
+    if [[ -n "${minusResult}" ]]; then
+        echo "引き算の結果は${minusResult}です"
+    else
+        echo "引き算の結果は不正です"
+    fi
+    if [[ -n "${divideResult}" ]]; then
+        echo "割り算の結果は${divideResult}です"
+    else
+        echo "割り算の結果は不正です"
+    fi
+}
+
+#
+# 引き算をする
+#
+function flk_test_minus() {
+    local valA=$1
+    local valB=$2
+    echo $(expr ${valA} - ${valB} 2> /dev/null)
+}
+
+#
+# 割り算算をする
+#
+function flk_test_divide() {
+    local valA=$1
+    local valB=$2
+    echo $(expr ${valA} / ${valB} 2> /dev/null)
+}
